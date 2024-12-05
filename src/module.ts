@@ -106,6 +106,7 @@ export default defineNuxtModule<ModuleOptions>({
         }
         const slices = readdirSync(layerPath, {
           withFileTypes: true,
+          recursive: true, // Slices can be grouped
         });
         return slices
           .filter((slice) => slice.isDirectory())
