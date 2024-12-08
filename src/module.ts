@@ -233,6 +233,44 @@ export default defineNuxtModule<ModuleOptions>({
       });
     }
 
+    if (preventCrossImports || autoImport) {
+      // If a new segment is added, restart the dev server to register the auto-imports
+      // If a new slice is added, restart to register impound plugin
+      const pathMatcher =
+        /\/(?<layer>[^\/]+)\/(?<slice>[^\/]+)(\/(?<segment>[^\/]+))?$/;
+      nuxt.addHooks({
+        builder: {
+          watch(event, path) {
+            if (event !== "addDir") return;
+
+            path = path.replace(srcDir, "");
+
+            const groups = pathMatcher.exec(path)?.groups;
+            if (groups == null) return;
+
+            nuxt.callHook("restart", { hard: true });
+
+            // TODO: detect change and make a more granular update instead of restarting the server
+
+            const { layer, slice, segment } = groups;
+            if ([appLayer, sharedLayer].includes(layer)) {
+              // slice is actually segment
+              // TODO: register the new dir for auto-imports
+              logger.debug(`Segment "${slice}" added to layer "${layer}".`);
+            } else if (segment) {
+              // TODO: register the new dir for auto-imports
+              logger.debug(
+                `Segment "${segment}" added to layer "${layer}" under slice "${slice}".`
+              );
+            } else {
+              // TODO: register an impound plugin for the new slice
+              logger.debug(`Slice "${slice}" added to layer "${layer}".`);
+            }
+          },
+        },
+      });
+    }
+
     const timeEnd = Date.now();
     return {
       timings: {
