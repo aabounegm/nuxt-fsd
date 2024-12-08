@@ -6,6 +6,7 @@ import {
   addBuildPlugin,
   addImportsDir,
   addComponentsDir,
+  useLogger,
 } from "@nuxt/kit";
 import { defu } from "defu";
 import { pascalCase } from "scule";
@@ -13,20 +14,26 @@ import { pascalCase } from "scule";
 // Module options TypeScript interface definition
 export interface ModuleOptions {
   /**
-   * Defaults to `["app", "pages", "widgets", "features", "entities", "shared"]`
+   * The folders inside <srcDir> that should be treated as FSD layers.
+   * The first and last layers correspond to "app" and "shared", and hence have no slices.
+   *
+   * Defaults to `["app", "pages", "widgets", "features", "entities", "shared"]`.
    */
-  layers: string[]; // TODO: should it be an object mapping layer to its name? Maybe allow both
+  layers: string[];
+  /**
+   * The names of the segments to be scanned for auto-imports.
+   *
+   * Defaults to `["ui", "model", "api", "lib", "config"]`.
+   */
+  segments: string[]; // TODO: same as layers
   /**
    * The prefix to add to the layer name to create the alias (for example, `@` or `~`).
    * Note that a prefix of `#` will cause clashes with app and shared (in Nuxt 4 compatibility mode).
+   *
    * Defaults to `''`.
    */
   aliasPrefix: string;
-  /**
-   *
-   */
-  segments: string[]; // TODO: same as layers
-  // TODO: option for prefixing components with layer
+  // TODO: option for whether to prefix components (auto import) with layer name or not
 }
 
 export default defineNuxtModule<ModuleOptions>({
@@ -34,7 +41,6 @@ export default defineNuxtModule<ModuleOptions>({
     name: "nuxt-fsd",
     configKey: "fsd", // Or should it be `featureSliced`?
   },
-  // Default configuration options of the Nuxt module
   defaults: {
     layers: ["app", "pages", "widgets", "features", "entities", "shared"],
     segments: ["ui", "model", "api", "lib", "config"],
@@ -43,7 +49,29 @@ export default defineNuxtModule<ModuleOptions>({
   async setup(options, nuxt) {
     const timeStart = Date.now();
 
+    const logger = useLogger("nuxt-fsd");
+
     const { aliasPrefix, layers, segments } = options;
+
+    // Validate user-passed options
+
+    if (layers.length < 2) {
+      logger.error("Must define at least 2 layers");
+    }
+    if (segments.length < 1) {
+      logger.error("Must define at least 1 segment");
+    }
+
+    const folderNameIllegal = /[/\\?%*:|"<>]/;
+    if (
+      layers.some((layer) => folderNameIllegal.test(layer)) ||
+      segments.some((segment) => folderNameIllegal.test(segment))
+    ) {
+      logger.error(
+        'Illegal layer or segment name used. Must not have any of `/\\?%*:|"<>`'
+      );
+    }
+
     const {
       srcDir,
       imports: { autoImport },
