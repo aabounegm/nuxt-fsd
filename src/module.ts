@@ -101,6 +101,24 @@ export default defineNuxtModule<ModuleOptions>({
 
     // Add segments to auto-imports dirs
 
+    // Glob is not yet supported: https://github.com/unjs/jiti/issues/339 (from https://github.com/nuxt/nuxt/discussions/29795)
+    const slices = middleLayers.flatMap((layer) => {
+      const layerPath = join(srcDir, layer);
+      if (!existsSync(layerPath)) {
+        return [];
+      }
+      const slices = readdirSync(layerPath, {
+        withFileTypes: true,
+        recursive: true, // Slices can be grouped
+      });
+      return slices
+        .filter((slice) => slice.isDirectory())
+        .map((slice) => ({ layer, slice: slice.name }));
+    });
+    const segmentsPaths = slices.flatMap(({ layer, slice }) =>
+      segments.map((segment) => ({ layer, slice, segment }))
+    );
+
     if (autoImport !== false) {
       // Register auto-imports from App layer
       addImportsDir(segments.map((segment) => join(srcDir, appLayer, segment)));
@@ -129,29 +147,13 @@ export default defineNuxtModule<ModuleOptions>({
       });
 
       // Register auto-imports from other layers
-      // Glob is not yet supported: https://github.com/unjs/jiti/issues/339 (from https://github.com/nuxt/nuxt/discussions/29795)
-      const contents = middleLayers.flatMap((layer) => {
-        const layerPath = join(srcDir, layer);
-        if (!existsSync(layerPath)) {
-          return [];
-        }
-        const slices = readdirSync(layerPath, {
-          withFileTypes: true,
-          recursive: true, // Slices can be grouped
-        });
-        return slices
-          .filter((slice) => slice.isDirectory())
-          .flatMap((slice) =>
-            segments.map((segment) => ({ layer, slice: slice.name, segment }))
-          );
-      });
 
       addImportsDir(
-        contents.map(({ layer, slice, segment }) =>
+        segmentsPaths.map(({ layer, slice, segment }) =>
           join(srcDir, layer, slice, segment)
         )
       );
-      contents.forEach((file) => {
+      segmentsPaths.forEach((file) => {
         const path = join(srcDir, file.layer, file.slice, file.segment);
         if (existsSync(path)) {
           addComponentsDir({
