@@ -37,7 +37,7 @@ export default defineNuxtModule<ModuleOptions>({
   // Default configuration options of the Nuxt module
   defaults: {
     layers: ["app", "pages", "widgets", "features", "entities", "shared"],
-    segments: ["ui", "model", "api", "lib", "cofig"],
+    segments: ["ui", "model", "api", "lib", "config"],
     aliasPrefix: "",
   },
   async setup(options, nuxt) {
