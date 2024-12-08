@@ -88,44 +88,47 @@ export default defineNuxtModule<ModuleOptions>({
       }))
     );
 
+    // "app" and "shared" do not have slices
+    const appLayer = layers.at(0)!;
+    const sharedLayer = layers.at(-1)!;
+    const middleLayers = layers.slice(1, -1);
+
+    // https://feature-sliced.design/docs/guides/tech/with-nuxtjs
+    nuxt.options.dir = defu(nuxt.options.dir, {
+      pages: join(srcDir, appLayer, "routes"),
+      layouts: join(srcDir, appLayer, "layouts"),
+    });
+
     // Add segments to auto-imports dirs
 
     if (autoImport !== false) {
-      // "app" and "shared" do not have slices
-      const appLayer = layers.at(0);
-      const sharedLayer = layers.at(-1);
-      const middleLayers = layers.slice(1, -1);
+      // Register auto-imports from App layer
+      addImportsDir(segments.map((segment) => join(srcDir, appLayer, segment)));
+      segments.forEach((segment) => {
+        const path = join(srcDir, appLayer, segment);
+        if (existsSync(path)) {
+          addComponentsDir({
+            path,
+            prefix: pascalCase(appLayer),
+          });
+        }
+      });
 
-      if (appLayer) {
-        addImportsDir(
-          segments.map((segment) => join(srcDir, appLayer, segment))
-        );
-        segments.forEach((segment) => {
-          const path = join(srcDir, appLayer, segment);
-          if (existsSync(path)) {
-            addComponentsDir({
-              path,
-              prefix: pascalCase(appLayer),
-            });
-          }
-        });
-      }
+      // Register auto-imports from Shared layer
+      addImportsDir(
+        segments.map((segment) => join(srcDir, sharedLayer, segment))
+      );
+      segments.forEach((segment) => {
+        const path = join(srcDir, sharedLayer, segment);
+        if (existsSync(path)) {
+          addComponentsDir({
+            path,
+            prefix: pascalCase(sharedLayer),
+          });
+        }
+      });
 
-      if (sharedLayer) {
-        addImportsDir(
-          segments.map((segment) => join(srcDir, sharedLayer, segment))
-        );
-        segments.forEach((segment) => {
-          const path = join(srcDir, sharedLayer, segment);
-          if (existsSync(path)) {
-            addComponentsDir({
-              path,
-              prefix: pascalCase(sharedLayer),
-            });
-          }
-        });
-      }
-
+      // Register auto-imports from other layers
       // Glob is not yet supported: https://github.com/unjs/jiti/issues/339 (from https://github.com/nuxt/nuxt/discussions/29795)
       const contents = middleLayers.flatMap((layer) => {
         const layerPath = join(srcDir, layer);
