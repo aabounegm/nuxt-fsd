@@ -11,6 +11,9 @@ importers:
       '@nuxt/kit':
         specifier: ^3.14.1592
         version: 3.14.1592(magicast@0.3.5)(rollup@4.28.0)
+      impound:
+        specifier: ^0.2.0
+        version: 0.2.0(rollup@4.28.0)
     devDependencies:
       '@nuxt/devtools':
         specifier: ^1.6.3

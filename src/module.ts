@@ -10,18 +10,22 @@ import {
 } from "@nuxt/kit";
 import { defu } from "defu";
 import { pascalCase } from "scule";
+import { ImpoundPlugin, type ImpoundOptions } from "impound";
+import escapeRE from "escape-string-regexp";
 
 // Module options TypeScript interface definition
 export interface ModuleOptions {
   /**
    * The folders inside <srcDir> that should be treated as FSD layers.
    * The first and last layers correspond to "app" and "shared", and hence have no slices.
+   * @see https://feature-sliced.design/docs/reference/layers
    *
    * Defaults to `["app", "pages", "widgets", "features", "entities", "shared"]`.
    */
   layers: string[];
   /**
    * The names of the segments to be scanned for auto-imports.
+   * @see https://feature-sliced.design/docs/reference/slices-segments#segments
    *
    * Defaults to `["ui", "model", "api", "lib", "config"]`.
    */
@@ -34,6 +38,14 @@ export interface ModuleOptions {
    */
   aliasPrefix: string;
   // TODO: option for whether to prefix components (auto import) with layer name or not
+  /**
+   * Prevent imports from layers above or from other slices in the same layer.
+   * Respects `@x`-notation for cross-imports public API.
+   * @see https://feature-sliced.design/docs/reference/public-api#public-api-for-cross-imports
+   *
+   * Defaults to `true`.
+   */
+  preventCrossImports?: boolean;
 }
 
 export default defineNuxtModule<ModuleOptions>({
@@ -45,13 +57,14 @@ export default defineNuxtModule<ModuleOptions>({
     layers: ["app", "pages", "widgets", "features", "entities", "shared"],
     segments: ["ui", "model", "api", "lib", "config"],
     aliasPrefix: "",
+    preventCrossImports: true,
   },
   async setup(options, nuxt) {
     const timeStart = Date.now();
 
     const logger = useLogger("nuxt-fsd");
 
-    const { aliasPrefix, layers, segments } = options;
+    const { aliasPrefix, layers, segments, preventCrossImports } = options;
 
     // Validate user-passed options
 
@@ -164,7 +177,61 @@ export default defineNuxtModule<ModuleOptions>({
       });
     }
 
-    // TODO: 3. Add build plugin impound
+    if (preventCrossImports) {
+      const layersIdxs: Record<string, number> = Object.fromEntries(
+        layers.map((layer, idx) => [layer, idx])
+      );
+
+      slices.forEach(({ layer, slice }) => {
+        const layerIdx = layersIdxs[layer];
+        const previousLayers = layers.slice(0, layerIdx);
+        if (previousLayers.length === 0) {
+          return;
+        }
+
+        // For all modules in the current slice, prevent imports from other layers or other slices in the same layer
+        const include: ImpoundOptions["include"] = [
+          join(srcDir, layer, slice, "**", "*"),
+        ];
+        const patterns: ImpoundOptions["patterns"] = previousLayers.map(
+          (previousLayer) => [
+            new RegExp(
+              String.raw`${escapeRE(srcDir).replaceAll(
+                "/",
+                "\\/"
+              )}\/${previousLayer}`
+            ),
+            `Cross-imports from higher layers are not allowed`,
+          ]
+        );
+        // TODO: should this be allowed only for "entities" layer?
+        // https://feature-sliced.design/docs/reference/public-api#public-api-for-cross-imports
+        patterns.push([
+          new RegExp(
+            String.raw`${escapeRE(srcDir).replaceAll(
+              "/",
+              "\\/"
+            )}\/${layer}\/(?![^\/]+\/@x\/${slice}|${slice}\/)`
+          ),
+          `Cross-imports from different slices in the same layer are not allowed. Try to use @x instead`,
+        ]);
+
+        const impoundOptions: ImpoundOptions = {
+          include,
+          patterns,
+        };
+
+        // Rename the plugin uniquely to avoid conflicts
+        const rename = (plugin: object) =>
+          Object.assign(plugin, { name: `nuxt-fsd:impound-${layer}-${slice}` });
+
+        addBuildPlugin({
+          vite: () => rename(ImpoundPlugin.vite(impoundOptions)),
+          webpack: () => rename(ImpoundPlugin.webpack(impoundOptions)),
+          rspack: () => rename(ImpoundPlugin.rspack(impoundOptions)),
+        });
+      });
+    }
 
     const timeEnd = Date.now();
     return {
