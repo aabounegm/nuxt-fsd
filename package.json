@@ -7,6 +7,10 @@
     "type": "git",
     "url": "git+https://github.com/aabounegm/nuxt-fsd.git"
   },
+  "keywords": [
+    "nuxt",
+    "fsd"
+  ],
   "license": "MIT",
   "type": "module",
   "exports": {
