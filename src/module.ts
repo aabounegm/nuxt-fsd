@@ -30,7 +30,7 @@ export interface ModuleOptions {
    *
    * Defaults to `["ui", "model", "api", "lib", "config"]`.
    */
-  segments: string[]; // TODO: same as layers
+  segments: string[];
   /**
    * The prefix to add to the layer name to create the alias (for example, `@` or `~`).
    * Note that a prefix of `#` will cause clashes with app and shared (in Nuxt 4 compatibility mode).
@@ -139,6 +139,9 @@ export default defineNuxtModule<ModuleOptions>({
     const segmentsPaths = slices.flatMap(({ layer, slice }) =>
       segments.map((segment) => ({ layer, slice, segment }))
     );
+
+    // TODO: remove "composables" and "utils" from `nuxt.options.imports.dirs`
+    // and "components" from `nuxt.options.components.dirs`
 
     if (autoImport !== false) {
       // Register auto-imports from App layer

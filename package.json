@@ -1,8 +1,9 @@
 {
-  "name": "my-module",
+  "name": "nuxt-fsd",
   "version": "1.0.0",
-  "description": "My new Nuxt module",
-  "repository": "your-org/my-module",
+  "description": "A Nuxt module for FSD support",
+  "author": "Abdelrahman Abounegm",
+  "repository": "aabounegm/nuxt-fsd",
   "license": "MIT",
   "type": "module",
   "exports": {
