@@ -12,9 +12,8 @@ A Nuxt 3 module for [Feature-Sliced Design](https://feature-sliced.design/) supp
 
 ## Features
 
-Redefines `layouts` directory to be `<srcDir>/app/layouts` segment and `pages` to `<srcDir>/app/routes` segment
-
 - Defines path aliases for all FSD layers (compatible with Nuxt 4 "app" directory structure)
+- Redefines `layouts` directory to be `<srcDir>/app/layouts` segment and `pages` to `<srcDir>/app/routes` segment
 - Registers auto-imports for code and components in all your slices (respects `imports.autoImport` config)
 - Prevents cross-imports from higher layers
 
