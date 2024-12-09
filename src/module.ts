@@ -7,6 +7,7 @@ import {
   addImportsDir,
   addComponentsDir,
   useLogger,
+  loadNuxtConfig,
 } from "@nuxt/kit";
 import { defu } from "defu";
 import { pascalCase } from "scule";
@@ -55,7 +56,7 @@ export default defineNuxtModule<ModuleOptions>({
   },
   defaults: {
     layers: ["app", "pages", "widgets", "features", "entities", "shared"],
-    segments: ["ui", "model", "api", "lib", "config"],
+    segments: ["ui", "model", "api", "lib", "config"], // TODO: should I add "composables" here?
     aliasPrefix: "",
     preventCrossImports: true,
   },
@@ -107,10 +108,17 @@ export default defineNuxtModule<ModuleOptions>({
     const middleLayers = layers.slice(1, -1);
 
     // https://feature-sliced.design/docs/guides/tech/with-nuxtjs
-    nuxt.options.dir = defu(nuxt.options.dir, {
-      pages: join(srcDir, appLayer, "routes"),
-      layouts: join(srcDir, appLayer, "layouts"),
+    // nuxt.config is already filled with built-in default values
+    const nuxtOptions = await loadNuxtConfig({
+      defaults: {
+        dir: {
+          pages: join(srcDir, appLayer, "routes"),
+          layouts: join(srcDir, appLayer, "layouts"),
+        },
+      },
     });
+
+    nuxt.options.dir = nuxtOptions.dir;
 
     // Add segments to auto-imports dirs
 
