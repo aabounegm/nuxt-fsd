@@ -1,3 +1,3 @@
 <template>
-  <PagesHomeHomepage />
+  <PagesHomePage />
 </template>

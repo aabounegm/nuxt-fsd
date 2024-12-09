@@ -4,6 +4,6 @@ const { items } = useCart();
 
 <template>
   <div>
-    <EntitiesBookSummary v-for="book in items" />
+    <EntitiesBookSummary v-for="(_book, idx) in items" :key="idx" />
   </div>
 </template>

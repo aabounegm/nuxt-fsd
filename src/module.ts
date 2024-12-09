@@ -248,7 +248,7 @@ export default defineNuxtModule<ModuleOptions>({
       // If a new segment is added, restart the dev server to register the auto-imports
       // If a new slice is added, restart to register impound plugin
       const pathMatcher =
-        /\/(?<layer>[^\/]+)\/(?<slice>[^\/]+)(\/(?<segment>[^\/]+))?$/;
+        /\/(?<layer>[^/]+)\/(?<slice>[^/]+)(?:\/(?<segment>[^/]+))?$/;
       nuxt.addHooks({
         builder: {
           watch(event, path) {

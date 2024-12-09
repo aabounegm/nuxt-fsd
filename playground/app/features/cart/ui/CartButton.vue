@@ -3,5 +3,5 @@ const cart = useCart();
 </script>
 
 <template>
-  <SharedButton @click="cart.addItem()">Add to cart</SharedButton>
+  <SharedMyButton @click="cart.addItem()">Add to cart</SharedMyButton>
 </template>
