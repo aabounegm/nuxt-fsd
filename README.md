@@ -59,10 +59,6 @@ That's it! You can now use My Module in your Nuxt app ✨
   # Run ESLint
   pnpm run lint
 
-  # Run Vitest
-  pnpm run test
-  pnpm run test:watch
-
   # Release new version
   pnpm run release
   ```
