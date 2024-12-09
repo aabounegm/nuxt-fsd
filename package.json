@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "description": "A Nuxt module for FSD support",
   "author": "Abdelrahman Abounegm",
-  "repository": "aabounegm/nuxt-fsd",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aabounegm/nuxt-fsd.git"
+  },
   "license": "MIT",
   "type": "module",
   "exports": {
